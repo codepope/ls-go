@@ -14,6 +14,7 @@ require (
 	github.com/acarl005/stripansi v0.0.0-20180116102854-5a71ef0e047d // indirect
 	github.com/alecthomas/template v0.0.0-20190718012654-fb15b899a751 // indirect
 	github.com/alecthomas/units v0.0.0-20211218093645-b94a6e3cc137 // indirect
+	github.com/dhowden/tag v0.0.0-20230630033851-978a0926ee25
 	github.com/mattn/go-isatty v0.0.16 // indirect
 	github.com/stretchr/testify v1.8.0 // indirect
 )

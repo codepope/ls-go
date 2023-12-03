@@ -8,29 +8,30 @@ import (
 
 // declare the struct that holds all the arguments
 type arguments struct {
-	paths     *[]string
-	version   *bool
-	all       *bool
-	bytes     *bool
-	mdate     *bool
-	owner     *bool
-	nogroup   *bool
-	perms     *bool
-	long      *bool
-	dirs      *bool
-	files     *bool
-	links     *bool
-	linkRel   *bool
-	sortSize  *bool
-	sortTime  *bool
-	sortKind  *bool
-	backwards *bool
-	stats     *bool
-	icons     *bool
-	nerdfont  *bool
-	recurse   *bool
-	find      *string
-	light     *bool
+	paths       *[]string
+	version     *bool
+	all         *bool
+	bytes       *bool
+	mdate       *bool
+	owner       *bool
+	nogroup     *bool
+	perms       *bool
+	long        *bool
+	dirs        *bool
+	files       *bool
+	links       *bool
+	linkRel     *bool
+	sortSize    *bool
+	sortTime    *bool
+	sortKind    *bool
+	backwards   *bool
+	stats       *bool
+	icons       *bool
+	nerdfont    *bool
+	recurse     *bool
+	find        *string
+	light       *bool
+	metasorttag *string
 }
 
 var args = arguments{
@@ -57,6 +58,7 @@ var args = arguments{
 	kingpin.Flag("recurse", "traverse all dirs recursively").Short('r').Bool(),
 	kingpin.Flag("find", "filter items with a regexp").Short('F').String(),
 	kingpin.Flag("light", "output colors for light-bachground themes").Short('I').Bool(),
+	kingpin.Flag("metasorttag", "filter items with a regexp").Short('M').String(),
 }
 
 func argsPostParse() {

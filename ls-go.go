@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+	"io"
+	"io/fs"
 	"io/ioutil"
 	"math"
 	"os"
@@ -14,6 +16,7 @@ import (
 	"time"
 
 	"github.com/acarl005/textcol"
+	"github.com/dhowden/tag"
 	colorable "github.com/mattn/go-colorable"
 	"github.com/willf/pad"
 	kingpin "gopkg.in/alecthomas/kingpin.v2"
@@ -28,6 +31,7 @@ type DisplayItem struct {
 	basename string
 	ext      string
 	link     *LinkInfo
+	tags     tag.Metadata
 }
 
 func (item DisplayItem) Filename() string {
@@ -247,6 +251,21 @@ func listFiles(parentDir string, items *[]os.FileInfo, forceDotfiles bool) {
 		if *args.links && fileInfo.Mode()&os.ModeSymlink != 0 {
 			displayItem.display += linkString(&displayItem, absPath)
 		}
+
+		if *args.metasorttag != "" && !fileInfo.IsDir() {
+			readseeker, err := convertToFileReadSeeker(parentDir, fileInfo)
+			if err != nil {
+				fmt.Println(fileInfo.Name(), err)
+			} else {
+				displayItem.tags, err = tag.ReadFrom(readseeker)
+				if err != nil {
+					// An error is normal....
+					continue
+				}
+				displayItem.display += metaTagString(&displayItem)
+			}
+		}
+
 	}
 
 	if *args.sortTime {
@@ -272,6 +291,47 @@ func listFiles(parentDir string, items *[]os.FileInfo, forceDotfiles bool) {
 		}
 	}
 
+	if *args.metasorttag != "" {
+		tagName := func(p1, p2 *DisplayItem) bool {
+			if p1.tags == nil && p2.tags != nil {
+				return false
+			}
+			if p1.tags != nil && p2.tags == nil {
+				return true
+			}
+			var t1, t2 string
+			switch *args.metasorttag {
+			case "title":
+				t1 = p1.tags.Title()
+				t2 = p2.tags.Title()
+			case "artist":
+				t1 = p1.tags.Artist()
+				t2 = p2.tags.Artist()
+			case "album":
+				t1 = p1.tags.Album()
+				t2 = p2.tags.Album()
+			default:
+				var t1ok, t2ok bool
+				t1, t1ok = p1.tags.Raw()[*args.metasorttag].(string)
+				if !t1ok {
+					return false
+				}
+				t2, t2ok = p2.tags.Raw()[*args.metasorttag].(string)
+				if !t2ok {
+					return false
+				}
+			}
+
+			return t1 < t2
+		}
+
+		ByMetaTag(tagName).Sort(files)
+
+		if *args.backwards {
+			reverse(files)
+		}
+	}
+
 	// combine the items together again after sorting
 	allItems := append(dirs, files...)
 
@@ -292,6 +352,14 @@ func listFiles(parentDir string, items *[]os.FileInfo, forceDotfiles bool) {
 	if *args.stats {
 		printStats(len(files), len(dirs))
 	}
+}
+
+func convertToFileReadSeeker(parentDir string, fileInfo fs.FileInfo) (io.ReadSeeker, error) {
+	file, err := os.Open(path.Join(parentDir, fileInfo.Name()))
+	if err != nil {
+		return nil, err
+	}
+	return file, nil
 }
 
 func getLinkInfo(item *DisplayItem, absPath string) {
@@ -597,6 +665,27 @@ func timeString(modtime time.Time) string {
 	timeColor := 14 - int(8*math.Cos(math.Pi*float64(hour)/12))
 	colored := []string{FgGray(22) + dateStr, FgGray(timeColor) + timeStr, Reset}
 	return strings.Join(colored, " ")
+}
+
+func metaTagString(item *DisplayItem) string {
+	if item.tags == nil {
+		return ""
+	}
+	switch *args.metasorttag {
+	case "title":
+		return fmt.Sprintf(" (Title:%s)", item.tags.Title())
+	case "artist":
+		return fmt.Sprintf(" (Artist:%s)", item.tags.Artist())
+	case "album":
+		return fmt.Sprintf(" (Title:%s)", item.tags.Album())
+	default:
+		var t1, t1ok = item.tags.Raw()[*args.metasorttag].(string)
+		if t1ok {
+			return fmt.Sprintf(" (%s:%s)", *args.metasorttag, t1)
+		}
+	}
+
+	return " (N/A)"
 }
 
 // When we list out any subdirectories, print those paths conspicuously above the contents. This helps with
