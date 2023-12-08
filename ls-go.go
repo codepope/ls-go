@@ -300,16 +300,53 @@ func listFiles(parentDir string, items *[]os.FileInfo, forceDotfiles bool) {
 				return true
 			}
 			var t1, t2 string
+			var i1, i2 int
+
 			switch *args.metasorttag {
 			case "title":
 				t1 = p1.tags.Title()
 				t2 = p2.tags.Title()
-			case "artist":
-				t1 = p1.tags.Artist()
-				t2 = p2.tags.Artist()
 			case "album":
 				t1 = p1.tags.Album()
 				t2 = p2.tags.Album()
+			case "artist":
+				t1 = p1.tags.Artist()
+				t2 = p2.tags.Artist()
+			case "albumartist":
+				t1 = p1.tags.AlbumArtist()
+				t2 = p2.tags.AlbumArtist()
+			case "composer":
+				t1 = p1.tags.Composer()
+				t2 = p2.tags.Composer()
+			case "genre":
+				t1 = p1.tags.Genre()
+				t2 = p2.tags.Genre()
+			case "year":
+				i1 = p1.tags.Year()
+				i2 = p2.tags.Year()
+				return i1 < i2
+			case "track":
+				i1, _ = p1.tags.Track()
+				i2, _ = p2.tags.Track()
+				return i1 < i2
+			case "tracks":
+				_, i1 = p1.tags.Track()
+				_, i2 = p2.tags.Track()
+				return i1 < i2
+			case "disc":
+				i1, _ = p1.tags.Disc()
+				i2, _ = p2.tags.Disc()
+				return i1 < i2
+			case "discs":
+				_, i1 = p1.tags.Disc()
+				_, i2 = p2.tags.Disc()
+				return i1 < i2
+			case "comment":
+				t1 = p1.tags.Comment()
+				t2 = p2.tags.Comment()
+			case "lyrics":
+				t1 = p1.tags.Lyrics()
+				t2 = p2.tags.Lyrics()
 			default:
 				var t1ok, t2ok bool
 				t1, t1ok = p1.tags.Raw()[*args.metasorttag].(string)
@@ -671,6 +708,7 @@ func metaTagString(item *DisplayItem) string {
 	if item.tags == nil {
 		return ""
 	}
+
 	switch *args.metasorttag {
 	case "title":
 		return fmt.Sprintf(" (Title:%s)", item.tags.Title())
@@ -678,6 +716,34 @@ func metaTagString(item *DisplayItem) string {
 		return fmt.Sprintf(" (Artist:%s)", item.tags.Artist())
 	case "album":
 		return fmt.Sprintf(" (Title:%s)", item.tags.Album())
+	case "albumartist":
+		return fmt.Sprintf(" (AlbumArtist:%s)", item.tags.AlbumArtist())
+	case "composer":
+		return fmt.Sprintf(" (Composer:%s)", item.tags.Composer())
+	case "genre":
+		return fmt.Sprintf(" (Genre:%s)", item.tags.Genre())
+	case "year":
+		return fmt.Sprintf(" (Year:%d)", item.tags.Year())
+	case "track":
+		var t1 int
+		t1, _ = item.tags.Track()
+		return fmt.Sprintf(" (Track:%d)", t1)
+	case "tracks":
+		var t2 int
+		_, t2 = item.tags.Track()
+		return fmt.Sprintf(" (Tracks:%d)", t2)
+	case "disc":
+		var t1 int
+		t1, _ = item.tags.Disc()
+		return fmt.Sprintf(" (Disc:%d)", t1)
+	case "discs":
+		var t2 int
+		_, t2 = item.tags.Disc()
+		return fmt.Sprintf(" (Discs:%d)", t2)
+	case "comment":
+		return fmt.Sprintf(" (Comment:%s)", item.tags.Comment())
+	case "lyrics":
+		return fmt.Sprintf(" (Lyrics:%s)", item.tags.Lyrics())
 	default:
 		var t1, t1ok = item.tags.Raw()[*args.metasorttag].(string)
 		if t1ok {

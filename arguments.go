@@ -58,7 +58,16 @@ var args = arguments{
 	kingpin.Flag("recurse", "traverse all dirs recursively").Short('r').Bool(),
 	kingpin.Flag("find", "filter items with a regexp").Short('F').String(),
 	kingpin.Flag("light", "output colors for light-bachground themes").Short('I').Bool(),
-	kingpin.Flag("metasorttag", "filter items with a regexp").Short('M').String(),
+	kingpin.Flag("metasorttag", "sort items on a metatag eg title,artist,album,albumartist,composer,track,tracks,disc,discs,year,genre").Short('M').String(),
+}
+
+func isValidTag(tag string) bool {
+	switch tag {
+	case "title", "artist", "album", "albumartist", "composer", "comment", "genre", "track", "disc", "tracks", "discs", "year":
+		return true
+	default:
+		return false
+	}
 }
 
 func argsPostParse() {
@@ -69,10 +78,15 @@ func argsPostParse() {
 		args.perms = &True
 		args.links = &True
 	}
+
 	if *args.dirs && *args.files {
 		log.Fatal("--dirs and --files cannot both be set")
 	}
 	if *args.nerdfont && *args.icons {
 		log.Fatal("--nerd-font and --icons cannot both be set")
+	}
+
+	if !isValidTag(*args.metasorttag) {
+		log.Fatal("Not a valid tag for --metasorttag")
 	}
 }
